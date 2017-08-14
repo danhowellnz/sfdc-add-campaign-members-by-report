@@ -67,11 +67,6 @@
         <name>Layout</name>
     </types>
     <types>
-        <members>AddCampaignMembersByReportSetting__c.All</members>
-        <members>Add_Campaign_Members_by_Report_Log__c.All</members>
-        <name>ListView</name>
-    </types>
-    <types>
         <members>Add_Campaign_Members_By_Report_Admin</members>
         <name>PermissionSet</name>
     </types>
