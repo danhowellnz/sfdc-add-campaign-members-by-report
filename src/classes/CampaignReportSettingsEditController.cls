@@ -49,17 +49,17 @@ public with sharing class CampaignReportSettingsEditController {
 			system.debug('setting: '+setting);
             
             this.selectedReportColumnName = setting.report_contact_or_lead_id_column_name__c;
-			this.selectedReportColumnNameDateTime = setting.DateTime_Field_Label__c;
+	    this.selectedReportColumnNameDateTime = setting.DateTime_Field_Label__c;
             
-            //prepopulate multiselect lists
-            if(setting.month__c!=null)
-                	this.month =  setting.month__c.replace('(','').replace(')','').split(', ');
-			if(setting.Days_in_month__c!=null)
-                	this.day = setting.Days_in_month__c.replace('(','').replace(')','').split(', ');
-            if(setting.Days_of_the_Week__c!=null)
-                	this.weekday = setting.Days_of_the_Week__c.replace('(','').replace(')','').split(', ');
-            if(setting.hour__c!=null)
-                	this.hour = setting.hour__c.replace('(','').replace(')','').split(', ');
+            //prepopulate multiselect lists --- I moved them to standard fields so don't need this
+          //  if(setting.month__c!=null)
+           //     	this.month =  setting.month__c.replace('(','').replace(')','').split(', ');
+			//if(setting.Days_in_month__c!=null)
+           //     	this.day = setting.Days_in_month__c.replace('(','').replace(')','').split(', ');
+           // if(setting.Days_of_the_Week__c!=null)
+           //     	this.weekday = setting.Days_of_the_Week__c.replace('(','').replace(')','').split(', ');
+           // if(setting.hour__c!=null)
+           //     	this.hour = setting.hour__c.replace('(','').replace(')','').split(', ');
             
            List<Campaign> campaignsList = new List<Campaign>([ SELECT id, name FROM Campaign WHERE id = :setting.campaign__c LIMIT 1 ]);
 
@@ -158,10 +158,6 @@ public with sharing class CampaignReportSettingsEditController {
                     campaign_member_added_status__c = this.member.status,
                     report_contact_or_lead_id_column_label__c = reportColumn.getLabel(),
                     report_contact_or_lead_id_column_name__c = reportColumn.getName(),
-                    month__c = this.month+'',
-                	Days_in_month__c = this.day+'',
-                	Days_of_the_Week__c =this.weekday+'',
-                	Hour__c = this.hour+'',
                     Report_ID__c = this.selectedReportId,
                     DateTime_Field__c = DateTime_Field,
                     DateTIme_Field_Label__c = DateTIme_Field_Label
