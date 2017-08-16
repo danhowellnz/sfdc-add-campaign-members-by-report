@@ -1,18 +1,36 @@
 <apex:page tabStyle="Add_Campaign_Members_By_Report_Settings__tab" standardController="AddCampaignMembersByReportSetting__c" extensions="CampaignReportSettingsEditController">
 
-    <apex:sectionHeader title="Manage Add Campaign Members By Report Settings"/>
+<apex:slds />
+<div class="slds-scope">
+
+
+    <div class="slds-page-header">
+      <div class="slds-media">
+        <div class="slds-media__figure">
+          <span class="slds-icon_container slds-icon-standard-opportunity" title="Description of icon when needed">
+            <svg class="slds-icon" aria-hidden="true">
+              <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/assets/icons/standard-sprite/svg/symbols.svg#opportunity"></use>
+            </svg>
+          </span>
+        </div>
+        <div class="slds-media__body">
+          <h1 class="slds-page-header__title slds-truncate slds-align-middle" title="Rohde Corp - 80,000 Widgets">Manage Add Campaign Members By Report Settings</h1>
+          <p class="slds-text-body_small slds-line-height_reset">Description</p>
+        </div>
+      </div>
+    </div>
 
     <apex:outputPanel id="mainPanel">
 
-        <apex:pageMessages id="theMessages"/>
+        <apex:pageMessages id="theMessages" />
 
         <apex:form >
 
             <apex:pageBlock >
 
-                <apex:pageBlockButtons >
-                    <apex:commandButton value=" Save " action="{!save}"/>
-                    <apex:commandButton value=" Cancel " action="{!cancel}"/>
+                <apex:pageBlockButtons location="bottom" >
+                    <apex:commandButton value=" Save " action="{!save}"   styleClass="slds-button slds-button_brand"/>
+                    <apex:commandButton value=" Cancel " action="{!cancel}" styleClass="slds-button slds-button_brand"/>
                 </apex:pageBlockButtons>
 
                 <apex:pageBlockSection columns="1" collapsible="false">
@@ -31,7 +49,12 @@
 
                             <apex:actionStatus id="selectCampaignStatus">
                                 <apex:facet name="start">
-                                    <img src="/img/loading.gif" width="16px" height="16px" style="margin-left: 5px;"/>
+                                      <div role="status" class="slds-spinner slds-spinner_brand  slds-spinner_medium">
+                                        <span class="slds-assistive-text">Loading</span>
+                                        <div class="slds-spinner__dot-a"></div>
+                                        <div class="slds-spinner__dot-b"></div>
+                                      </div>
+
                                 </apex:facet>
                             </apex:actionStatus>
 
@@ -139,4 +162,6 @@
 
     </apex:outputPanel>
 
+
+</div>
 </apex:page>

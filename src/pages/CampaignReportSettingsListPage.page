@@ -1,5 +1,7 @@
 <apex:page tabStyle="Add_Campaign_Members_By_Report_Settings__tab" controller="CampaignReportSettingsListController" readOnly="true">
-
+<apex:slds />
+	<div class="slds-scope">
+    
     <apex:sectionHeader title="Add Campaign Members by Report Settings"/>
 
     <apex:outputPanel id="mainPanel">
@@ -12,9 +14,10 @@
 
                 <apex:pageBlockButtons location="top">
                     <apex:commandButton value=" New " action="{!URLFOR($Page.CampaignReportSettingsEditPage, null, [ retURL = $Page.CampaignReportSettingsListPage ])}"/>
+                    <apex:commandButton value=" Set Schedule " action="{!URLFOR($Page.SetSchedule, null, [ retURL = $Page.CampaignReportSettingsListPage ])}"/>
                 </apex:pageBlockButtons>
 
-                <apex:pageBlockTable var="wrapper" value="{!settingWrappers}">
+                <apex:pageBlockTable var="wrapper" value="{!settingWrappers}" styleClass="slds-table slds-table_bordered slds-table_cell-buffer">
 
                     <apex:column headerValue="Actions" styleClass="actionColumn">
 
@@ -71,4 +74,5 @@
 
     </apex:outputPanel>
 
+    </div>
 </apex:page>

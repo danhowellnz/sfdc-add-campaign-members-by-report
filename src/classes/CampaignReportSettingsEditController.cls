@@ -5,73 +5,98 @@
 public with sharing class CampaignReportSettingsEditController {
 
     private ApexPages.StandardController stdController { get; set; }
-
     public String selectedFolderId { get; set; }
-
     public String selectedReportId { get; set; }
-
     public String selectedReportColumnName { get; set; }
-
+    public String selectedReportColumnNameDateTime { get; set; }
     public CampaignMember member { get; set; } // used by apex:inputField to select campaign and member status
-
+	public string[] month { get; set; }
+    public String[] day { get; set; }
+    public String[] weekday { get; set; }
+    public String[] hour { get; set; }
+    
+    
     public CampaignReportSettingsEditController( ApexPages.StandardController stdController ) {
 
         this.stdController = stdController;
 
         this.member = new CampaignMember();
-
+		
+        system.debug('Id: '+stdController.getId());
         if ( String.isNotBlank( stdController.getId() ) ) {
 
-            AddCampaignMembersByReportSetting__c setting = [
+            Scheduled_Report_Operations__c setting = [
                 SELECT
                     id,
                     name,
-                    campaign_id__c,
+                	Report_ID__c,
+                    campaign__c,
                     campaign_member_added_status__c,
                     report_contact_or_lead_id_column_label__c,
-                    report_contact_or_lead_id_column_name__c
+                    report_contact_or_lead_id_column_name__c,
+                	DateTime_Field__c,
+                	month__c,
+                	Days_in_month__c,
+                	Days_of_the_Week__c,
+                	Hour__c,
+               		DateTime_Field_Label__c
                 FROM
-                    AddCampaignMembersByReportSetting__c
+                    Scheduled_Report_Operations__c
                 WHERE
                     id = :stdController.getId()
                 LIMIT 1
             ];
-
+			system.debug('setting: '+setting);
+            
             this.selectedReportColumnName = setting.report_contact_or_lead_id_column_name__c;
-
-            List<Report> reportsList = new List<Report>([ SELECT id, ownerId, name FROM Report WHERE id = :setting.name LIMIT 1 ]);
-
-            if ( reportsList.size() == 0 ) {
-
-                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'No report found with id: ' + setting.name + '. Please verify report exists and update this Custom Setting directly in Setup menu.' ) );
-
-            } else {
-
-                this.selectedReportId = reportsList[0].id;
-                this.selectedFolderId = reportsList[0].ownerId;
-
-                Reports.ReportExtendedMetadata metadata = Reports.ReportManager.describeReport( this.selectedReportId ).getReportExtendedMetadata();
-                Map<String, Reports.DetailColumn> reportColumnsMap = metadata.getDetailColumnInfo();
-                Reports.DetailColumn reportColumn = reportColumnsMap.get( this.selectedReportColumnName );
-
-                if ( reportColumn == null ) {
-                    ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'No report column found "' + setting.report_contact_or_lead_id_column_label__c + '" (' + setting.report_contact_or_lead_id_column_name__c + '). Please choose another report column that contains a Lead or Contact ID.' ) );
-                }
-
-            }
-
-            List<Campaign> campaignsList = new List<Campaign>([ SELECT id, name FROM Campaign WHERE id = :setting.campaign_id__c LIMIT 1 ]);
+			this.selectedReportColumnNameDateTime = setting.DateTime_Field_Label__c;
+            
+            //prepopulate multiselect lists
+            if(setting.month__c!=null)
+                	this.month =  setting.month__c.replace('(','').replace(')','').split(', ');
+			if(setting.Days_in_month__c!=null)
+                	this.day = setting.Days_in_month__c.replace('(','').replace(')','').split(', ');
+            if(setting.Days_of_the_Week__c!=null)
+                	this.weekday = setting.Days_of_the_Week__c.replace('(','').replace(')','').split(', ');
+            if(setting.hour__c!=null)
+                	this.hour = setting.hour__c.replace('(','').replace(')','').split(', ');
+            
+           List<Campaign> campaignsList = new List<Campaign>([ SELECT id, name FROM Campaign WHERE id = :setting.campaign__c LIMIT 1 ]);
 
             if ( campaignsList.size() == 0 ) {
 
-                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'No Campaign found with id: ' + setting.campaign_id__c + '. Please choose a new Campaign to use.' ) );
+                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'No Campaign found. Please choose a new Campaign to use.' ) );
 
             } else {
 
                 this.member.campaignId = campaignsList[0].id;
                 this.member.status = setting.campaign_member_added_status__c;
 
-            }
+                      
+            
+            
+                        List<Report> reportsList = new List<Report>([ SELECT id, ownerId, name FROM Report WHERE id = :setting.Report_ID__c LIMIT 1 ]);
+            
+                        if ( reportsList.size() == 0 ) {
+            
+                            ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'No report added: Please add the report options below.' ) );
+            
+                        } else {
+            
+                            this.selectedReportId = reportsList[0].id;
+                            this.selectedFolderId = reportsList[0].ownerId;
+            
+                            Reports.ReportExtendedMetadata metadata = Reports.ReportManager.describeReport( this.selectedReportId ).getReportExtendedMetadata();
+                            Map<String, Reports.DetailColumn> reportColumnsMap = metadata.getDetailColumnInfo();
+                            Reports.DetailColumn reportColumn = reportColumnsMap.get( this.selectedReportColumnName );
+            
+                            if ( reportColumn == null ) {
+                                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'No report column found "' + setting.report_contact_or_lead_id_column_label__c + '" (' + setting.report_contact_or_lead_id_column_name__c + '). Please choose another report column that contains a Lead or Contact ID.' ) );
+                            }
+            
+                        }
+
+ 			 } //end campaign else
 
         }
 
@@ -113,21 +138,54 @@ public with sharing class CampaignReportSettingsEditController {
                 Reports.ReportExtendedMetadata metadata = Reports.ReportManager.describeReport( this.selectedReportId ).getReportExtendedMetadata();
                 Map<String, Reports.DetailColumn> reportColumnsMap = metadata.getDetailColumnInfo();
                 Reports.DetailColumn reportColumn = reportColumnsMap.get( this.selectedReportColumnName );
-
-                AddCampaignMembersByReportSetting__c setting = new AddCampaignMembersByReportSetting__c(
+                
+                //store the real value in the label field to prepopulate the picklist
+                //remove the . from custom fields to help with the batch updater
+                
+           		string DateTime_Field ='';
+                string DateTIme_Field_Label ='';
+                //if there is a dot in the api name then take the value after the first dot
+                if(this.selectedReportColumnNameDateTime != null){
+                    Reports.DetailColumn DateTimereportColumn = reportColumnsMap.get( this.selectedReportColumnNameDateTime );
+                    String[] DateTime_Field_split = this.selectedReportColumnNameDateTime.split('\\.');                
+                    DateTime_Field = DateTime_Field_split.size()>1 ? DateTime_Field_split[1] : DateTime_Field_split[0];
+                    DateTIme_Field_Label = DateTimereportColumn.getName();
+                }
+                
+                Scheduled_Report_Operations__c setting = new Scheduled_Report_Operations__c(
                     id = this.stdController.getId(),
-                    name = this.selectedReportId.left( 15 ),
-                    campaign_id__c = String.valueOf( this.member.campaignId ).left( 15 ),
+                    campaign__c = String.valueOf( this.member.campaignId ).left( 15 ),
                     campaign_member_added_status__c = this.member.status,
                     report_contact_or_lead_id_column_label__c = reportColumn.getLabel(),
-                    report_contact_or_lead_id_column_name__c = reportColumn.getName()
+                    report_contact_or_lead_id_column_name__c = reportColumn.getName(),
+                    month__c = this.month+'',
+                	Days_in_month__c = this.day+'',
+                	Days_of_the_Week__c =this.weekday+'',
+                	Hour__c = this.hour+'',
+                    Report_ID__c = this.selectedReportId,
+                    DateTime_Field__c = DateTime_Field,
+                    DateTIme_Field_Label__c = DateTIme_Field_Label
                 );
+                
+                //current bug, only returning ten records to controller. 
+                system.debug('this.month '+this.month);
 
                 upsert setting;
-
-                returnPage = Page.CampaignReportSettingsListPage;
-                returnPage.getParameters().put( 'save_success', 'true' );
-                returnPage.setRedirect( true );
+                
+                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.CONFIRM, 'Report Selection Updated' ) );
+           
+                               
+                 
+            //Remove existing schedules
+            for (CronTrigger t : [select Id,CronJobDetail.name,CronExpression from CronTrigger where CronJobDetail.name='ScheduleReportOperation']) {
+                try {
+                    System.abortJob(t.Id);
+                }catch (Exception e){}
+            }
+            
+            // Kickoff the calculate job for this in 1 minute
+            string cron = '0 '+(integer.valueOf(system.now().minute() )+1)+   ' * * * ?';
+            System.schedule('ScheduleReportOperation', cron, new AddCampaignMembersByReportSchedulable()   );
 
             }
 

@@ -8,6 +8,12 @@ public with sharing class AddCampaignMembersByReportBatchable implements Databas
     private ID reportId;
 
     @TestVisible
+    private ID RecordId;
+
+    @TestVisible
+    private STRING RecordTypeName;
+    
+    @TestVisible
     private ID campaignId;
 
     @TestVisible
@@ -21,27 +27,33 @@ public with sharing class AddCampaignMembersByReportBatchable implements Databas
     // Note, this is not the Column Label which may change based on running user's language/locale settings.
     // And for our adding campaign members purpose, should be a Contact ID or Lead ID column.
     private String columnName;
+    private string columnDateTime;
 
     // ----------------------------------------------------
 
-    public AddCampaignMembersByReportBatchable( ID reportId ) {
+    public AddCampaignMembersByReportBatchable( ID RecordId, string RecordTypeName) {
 
         try {
 
             System.debug( 'AddCampaignMembersByReportBatchable.init' );
 
-            // to avoid having to check 15 and 18 character ids, the custom setting name is supposed to be the 15 character id for the report
-            AddCampaignMembersByReportSetting__c setting = AddCampaignMembersByReportSetting__c.getValues( String.valueOf( reportId ).left( 15 ) );
+            //Get record
+            list<Scheduled_Report_Operations__c> reportsettings = [select Id, Report_ID__c,Campaign__c,Campaign_Member_Added_Status__c,Report_Contact_or_Lead_ID_Column_Name__c,
+                                                                   RecordType.DeveloperName 
+                                                                  ,DateTIme_Field__c from Scheduled_Report_Operations__c where Id = :RecordId ];
 
-            if ( setting == null ) {
-                throw new AddCampaignMembersByReportException( 'Missing custom setting AddCampaignMembersByReportSetting__c record with name "' + reportId + '"' );
+            if ( reportsettings == null ) {
+                throw new AddCampaignMembersByReportException( 'Missing Scheduled_Report_Operations__c with ID: '+RecordId );
             }
 
-            this.reportId = reportId;
-            this.campaignId = setting.campaign_id__c;
-            this.campaignMemberStatus = setting.campaign_member_added_status__c;
-            this.columnName = setting.report_contact_or_lead_id_column_name__c;
+            this.RecordTypeName = reportsettings[0].Recordtype.DeveloperName ;
+            this.reportId = reportsettings[0].Report_ID__c;
+            this.campaignId = reportsettings[0].Campaign__c;
+            this.campaignMemberStatus = reportsettings[0].campaign_member_added_status__c;
+            this.columnName = reportsettings[0].report_contact_or_lead_id_column_name__c;
+            this.columnDateTime = reportsettings[0].DateTIme_Field__c;
 
+            System.debug( 'RecordTypeName=' + this.RecordTypeName );
             System.debug( 'reportId=' + this.reportId );
             System.debug( 'campaignId=' + this.campaignId );
             System.debug( 'campaignMemberStatus=' + this.campaignMemberStatus );
@@ -53,11 +65,11 @@ public with sharing class AddCampaignMembersByReportBatchable implements Databas
             System.debug( 'reportColumnsMap: ' + reportColumnsMap );
 
             if ( !reportColumnsMap.containsKey( columnName ) ) {
-                throw new AddCampaignMembersByReportException( 'Report with id "' + reportId + '" is missing expected column "' + setting.report_contact_or_lead_id_column_label__c + '" that references a record id like Contact.Id or Lead.Id' );
+                throw new AddCampaignMembersByReportException( 'Report with id "' + reportId + '" is missing expected column "' + reportsettings[0].report_contact_or_lead_id_column_label__c + '" that references a record id like Contact.Id or Lead.Id' );
             }
 
         } catch ( Exception e ) {
-
+			System.debug( 'exception ' + e );
             AddCampaignMembersByReportLogger.log( e );
 
         }
@@ -71,7 +83,11 @@ public with sharing class AddCampaignMembersByReportBatchable implements Databas
         try {
 
             System.debug( 'AddCampaignMembersByReportBatchable.start: ' + context );
-
+            System.debug('this.reportId '+this.reportId);
+			System.debug('this.columnName '+this.columnName);
+            System.debug('this.columnDateTime '+columnDateTime);
+            
+            
             Iterable<ID> reportRowIdIterable = new NPSP_ReportService.ReportRowIdIterableIterator( this.reportId, this.columnName );
 
             Iterator<ID> reportRowIdIterator = reportRowIdIterable.iterator();
@@ -80,7 +96,7 @@ public with sharing class AddCampaignMembersByReportBatchable implements Databas
             return (Iterable<ID>) ( ( Test.isRunningTest() && reportRowIdIterator.hasNext() ) ? new List<ID>{ reportRowIdIterator.next() } : reportRowIdIterable );
 
         } catch ( Exception e ) {
-
+			System.debug( 'start exception ' + e );
             AddCampaignMembersByReportLogger.log( context.getJobId(), e );
 
             return new EmptyIterator();
@@ -96,8 +112,30 @@ public with sharing class AddCampaignMembersByReportBatchable implements Databas
         try {
 
             System.debug( 'AddCampaignMembersByReportBatchable.execute: ' + context );
-
-            new AddCampaignMembersByReportService().addMembersToCampaign( recordIds, this.campaignId, this.campaignMemberStatus );
+            
+			system.debug('RecordTypeName: '+RecordTypeName);
+            system.debug('columnDateTime: '+columnDateTime);
+            
+            if(RecordTypeName == 'Add_Campaign_Members'){
+            	new AddCampaignMembersByReportService().addMembersToCampaign( recordIds, this.campaignId, this.campaignMemberStatus );
+        	}
+            if(RecordTypeName == 'Update_Field_on_Records'){
+            	     
+                	DateTime DateTimeNow =system.now();
+                    List<sObject> recordstoupdate = new List<SObject>();
+                    recordstoupdate.clear(); 
+                
+                    for(Id idToUpdate : recordIds ){
+                        SObject o1 = idToUpdate.getSObjectType().newSObject(idToUpdate);                      
+                        //change to columnName
+                        o1.put(columnDateTime, DateTimeNow );
+                        recordstoupdate.add(o1);
+                    }
+                
+                update recordstoupdate;
+        	}            
+            
+            
 
         } catch ( Exception e ) {
 
