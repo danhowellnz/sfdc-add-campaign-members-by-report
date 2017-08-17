@@ -145,8 +145,6 @@
                             <apex:selectList id="selectReportColumnInput" value="{!selectedReportColumnName}" size="1" multiselect="false" required="false"   styleClass="slds-select">
                                 <apex:selectOptions value="{!reportColumnOptions}"/>
                                 <apex:actionSupport event="onchange" status="Loading" rerender="mainPanel"/>
-                                <apex:actionSupport event="onchange" action="{!save}" /> 
-                                <apex:actionSupport event="onblur" action="{!save}" />  
                             </apex:selectList>
 
                 </div>
@@ -161,16 +159,19 @@
                     <div class="labelhelp">Select the field which should have it's datetime modified with each schedule</div><br />
                             <apex:selectList id="selectReportColumnInputDateTime" value="{!selectedReportColumnNameDateTime}" size="1" multiselect="false" required="false"
                                                styleClass="slds-select" >
-                                <apex:selectOptions value="{!reportColumnOptions}"/>
+                                <apex:selectOptions value="{!ReportColumnOptions_dateime}"/>
                                 <apex:actionSupport event="onchange" status="Loading" rerender="mainPanel"/>
-                                <apex:actionSupport event="onchange" action="{!save}" /> 
-                                <apex:actionSupport event="onblur" action="{!save}" />  
                             </apex:selectList>
 
 
                   </div>
+             
+            </div> <!-- End column groupings  --> 
                 
-                
+
+                 <div class="slds-col" >   
+                  <apex:commandButton action="{!save}" styleClass="slds-button slds-button_brand" value="Save Selection" style="margin-top:30px"/>
+                </div>   
           
                 
                 
@@ -188,7 +189,7 @@
                                 </apex:facet>
                             </apex:actionStatus>     
 
-                </div>
+
                 
             </apex:pageBlock>
 
