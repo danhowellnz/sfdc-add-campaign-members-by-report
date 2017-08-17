@@ -118,7 +118,7 @@
 
                     <div class="slds-col EachSection">
             		<label class="slds-form-element__label" >Report Folder</label><br/>
-                    <div class="labelhelp">Choose the Report Folder that contains your report of Contacts or Leads.</div><br />
+                    <div class="labelhelp">Choose the Report Folder that contains your report of Records.</div><br />
                             <apex:selectList id="selectFolderInput" value="{!selectedFolderId}" size="1" multiselect="false" required="false"
                                                styleClass="slds-select" >
                                 <apex:selectOptions value="{!folderOptions}"/>
@@ -129,7 +129,9 @@
                     <!-- Choose Report -->
                     <div class="slds-col EachSection">
             		<label class="slds-form-element__label" >Report Name</label><br/>
-                        <div class="labelhelp">Choose the Report that contains list of ids</div><br />
+                    <div class="labelhelp"  style="{! if(Scheduled_Report_Operations__c.recordType.DeveloperName != "Add_Campaign_Members","display:none",null) }">Choose the Report that contains list of lead or contact ids</div>
+                    <div class="labelhelp"  style="{! if(Scheduled_Report_Operations__c.recordType.DeveloperName != "Update_Field_on_Records","display:none",null) }">Choose the Report that contains a list of ids and has a DateTime field to update</div>    
+					<br />
                             <apex:selectList id="selectReportInput" value="{!selectedReportId}" size="1" multiselect="false" required="false"   styleClass="slds-select">
                                 <apex:selectOptions value="{!reportOptions}"/>
                                 <apex:actionSupport event="onchange" status="Loading" rerender="mainPanel"/>                       
@@ -139,7 +141,9 @@
                     <!-- Choose Report Column -->
                     <div class="slds-col EachSection">
             		<label class="slds-form-element__label" >Report Column with ID</label><br/>
-                    <div class="labelhelp">For campaign members it must be a lead id or a contact id</div><br />
+                    <div class="labelhelp"  style="{! if(Scheduled_Report_Operations__c.recordType.DeveloperName != "Add_Campaign_Members","display:none",null) }">Choose a lead or contact id field</div>
+                    <div class="labelhelp"  style="{! if(Scheduled_Report_Operations__c.recordType.DeveloperName != "Update_Field_on_Records","display:none",null) }">choose the ID of the field to be updated each time the schedule runs</div>    
+                     <br />
 
 
                             <apex:selectList id="selectReportColumnInput" value="{!selectedReportColumnName}" size="1" multiselect="false" required="false"   styleClass="slds-select">
