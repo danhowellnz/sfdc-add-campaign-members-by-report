@@ -14,7 +14,8 @@ public with sharing class CampaignReportSettingsEditController {
     public String[] day { get; set; }
     public String[] weekday { get; set; }
     public String[] hour { get; set; }
-    
+    public string RecordTypeDeveloperName; 
+
     
     public CampaignReportSettingsEditController( ApexPages.StandardController stdController ) {
 
@@ -39,7 +40,8 @@ public with sharing class CampaignReportSettingsEditController {
                 	Days_in_month__c,
                 	Days_of_the_Week__c,
                 	Hour__c,
-               		DateTime_Field_Label__c
+               		DateTime_Field_Label__c,
+                	recordType.DeveloperName
                 FROM
                     Scheduled_Report_Operations__c
                 WHERE
@@ -49,9 +51,13 @@ public with sharing class CampaignReportSettingsEditController {
 			system.debug('setting: '+setting);
             
             this.selectedReportColumnName = setting.report_contact_or_lead_id_column_name__c;
-	    this.selectedReportColumnNameDateTime = setting.DateTime_Field_Label__c;
+			this.selectedReportColumnNameDateTime = setting.DateTime_Field_Label__c;
+            RecordTypeDeveloperName = setting.recordType.DeveloperName;
+ 
+
+   
             
-            //prepopulate multiselect lists --- I moved them to standard fields so don't need this
+            //prepopulate multiselect lists --- I moved them to standard fields 
           //  if(setting.month__c!=null)
            //     	this.month =  setting.month__c.replace('(','').replace(')','').split(', ');
 			//if(setting.Days_in_month__c!=null)
@@ -129,10 +135,17 @@ public with sharing class CampaignReportSettingsEditController {
             }
 
             if ( String.isBlank( this.selectedReportColumnName ) ) {
-                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'Report Column is required.' ) );
+                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'Report Column with ID is required.' ) );
+                hasError = true;
+            }
+            
+            if ( String.isBlank( this.selectedReportColumnNameDateTime ) && RecordTypeDeveloperName == 'Update_Field_on_Records'  ) {
+                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.ERROR, 'Report Column with DateTime is required.' ) );
                 hasError = true;
             }
 
+      
+            
             if ( !hasError ) {
 
                 Reports.ReportExtendedMetadata metadata = Reports.ReportManager.describeReport( this.selectedReportId ).getReportExtendedMetadata();
@@ -168,7 +181,7 @@ public with sharing class CampaignReportSettingsEditController {
 
                 upsert setting;
                 
-                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.CONFIRM, 'Report Selection Updated' ) );
+                ApexPages.addMessage( new ApexPages.Message( ApexPages.Severity.CONFIRM, 'Report Selection Updated. This tool will begin in one minute and repeat each hour. Whenever it meets the criteria of any of the schedules then it will fire. ' ) );
            
                                
                  
@@ -196,6 +209,11 @@ public with sharing class CampaignReportSettingsEditController {
         return returnPage;
     }
 
+    
+          //////---------------------------------------------------------  
+ 
+    
+    
     public List<SelectOption> getMemberStatusOptions() {
 
         List<SelectOption> options = new List<SelectOption>();
@@ -217,6 +235,10 @@ public with sharing class CampaignReportSettingsEditController {
         return options;
     }
 
+          //////---------------------------------------------------------  
+ 
+    
+    
     public List<SelectOption> getFolderOptions() {
 
         List<SelectOption> options = new List<SelectOption>();
@@ -230,6 +252,11 @@ public with sharing class CampaignReportSettingsEditController {
         return options;
     }
 
+    
+          //////---------------------------------------------------------  
+ 
+    
+    
     public List<SelectOption> getReportOptions() {
 
         List<SelectOption> options = new List<SelectOption>();
@@ -251,30 +278,70 @@ public with sharing class CampaignReportSettingsEditController {
         return options;
     }
 
+    
+      //////---------------------------------------------------------  
+ 
     public List<SelectOption> getReportColumnOptions() {
 
         List<SelectOption> options = new List<SelectOption>();
 
         if ( String.isNotBlank( this.selectedReportId ) ) {
 
-            options.add( new SelectOption( '', '--Select--') );
-
             Reports.ReportExtendedMetadata metadata = Reports.ReportManager.describeReport( this.selectedReportId ).getReportExtendedMetadata();
             Map<String, Reports.DetailColumn> reportColumnsMap = metadata.getDetailColumnInfo();
 
-            for ( Reports.DetailColumn column : reportColumnsMap.values() ) {
-                options.add( new SelectOption( column.getName(), column.getLabel() ) );
+            for ( Reports.DetailColumn column : reportColumnsMap.values() ) {                
+                if( (column.getDataType()+'') =='ID_DATA'){
+                	options.add( new SelectOption( column.getName(), column.getLabel() ) );
+                }
             }
 
-        } else {
-
-            options.add( new SelectOption( '', '--Choose Report--') );
+        }
+        if(options.size()>0) { 
+                options.add(0, new SelectOption( '', '--Select--') );
+        }
+            else{
+            options.add( new SelectOption( '', '--No ID Fields in Selected Report--') );
 
         }
 
         return options;
     }
 
+  //////---------------------------------------------------------  
+     
+        public List<SelectOption> getReportColumnOptions_dateime() {
+
+        List<SelectOption> options = new List<SelectOption>();
+
+        if ( String.isNotBlank( this.selectedReportId ) ) {
+
+
+            Reports.ReportExtendedMetadata metadata = Reports.ReportManager.describeReport( this.selectedReportId ).getReportExtendedMetadata();
+            Map<String, Reports.DetailColumn> reportColumnsMap = metadata.getDetailColumnInfo();
+
+            for ( Reports.DetailColumn column : reportColumnsMap.values() ) {                
+                if( (column.getDataType()+'') =='DATETIME_DATA'){
+                	options.add( new SelectOption( column.getName(), column.getLabel() ) );
+                }
+            }
+            
+
+        } 
+        if(options.size()>0) { 
+                options.add(0, new SelectOption( '', '--Select--') );
+        }
+            else{
+            options.add( new SelectOption( '', '--No DateTime Fields in Selected Report--') );
+
+        }
+
+        return options;
+    }
+
+    
+  //////---------------------------------------------------------  
+    
     private void logAndAddErrorMessages( Exception e ) {
 
         System.debug( LoggingLevel.ERROR, e.getMessage() + ' : ' + e.getStackTraceString() );
